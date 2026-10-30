@@ -1,0 +1,6 @@
+# sops encryption rules (ADR-0004). Any file matching a path_regex is encrypted to the listed age recipients.
+# Public keys only; private keys never go in this repo.
+creation_rules:
+  - path_regex: secrets/.*\.sops\.ya?ml$
+    age: >-
+      age196z7m9t70vw2h34qlx5wfrh0axl3akyg08qxpv8nkg548hnsps8qz7c83u

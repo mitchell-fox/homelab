@@ -30,6 +30,13 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
   Why: the schema is informal (ADR-0003); a typo in an IP or MAC should fail fast.
 - **Compute host IPs with `cidrhost()` offsets instead of literal IPs.**
   Why: makes a renumbering a true one-line change (ADR-0003 consequences). Weigh against readability.
+- **Pre-commit hook that rejects unencrypted files in `secrets/`.**
+  Why: one `git add` of a plaintext file in a public repo leaks it for good. Check for the `sops:` metadata key.
+  When: soon; cheap insurance before real secrets land.
+- **Second age recipient as an offline backup key.**
+  Why: a backup key kept offline (printed or on a USB stick) keeps secrets decryptable if the laptop and
+  the password manager are both lost. Flux will need its own key in step 5 anyway.
+  When: before the DR test (step 6), at the latest.
 - **Hand out the router as secondary DNS via DHCP.**
   Why: the Pi is a single point of failure for DNS (ADR-0007). Do it in step 3.
 

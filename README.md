@@ -35,7 +35,7 @@ docs/runbooks/           step-by-step procedures for humans (rebuild, update, ro
 
 ## Roadmap
 
-- [ ] 1. Repo, source of truth, secrets, local Terraform state
+- [x] 1. Repo, source of truth, secrets, local Terraform state
 - [ ] 2. UniFi in Terraform (import the existing config, don't recreate it)
 - [ ] 3. Pi DNS via Ansible, with records generated from `network.yaml`
 - [ ] 4. Proxmox migration, VMs as code
