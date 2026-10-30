@@ -20,6 +20,7 @@ hosts:
     ip: 192.168.10.1
     mac: TODO
     role: gateway
+    ansible: false            # managed by Terraform (UniFi provider), not Ansible
     notes: UniFi router; model and controller location TBD
 
   pi:

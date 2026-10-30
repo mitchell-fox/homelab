@@ -47,7 +47,7 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
 - **Git server backups** (ADR-0013): nightly `forgejo dump` → restic to the fitlet2's microSD and to a second
   machine over SFTP; smartd watches the no-name SSD. The restic password is a second must-not-lose secret.
 - **Ansible behind `make`** (ADR-0011): `ansible/inventory.py` generates the inventory from `network.yaml`,
-  grouped by `role:`; settings in `ansible/group_vars/<role>.yml`; all versions pinned.
+  grouped by `role:` into `<role>_hosts` groups; settings in `ansible/group_vars/<role>_hosts.yml`; all versions pinned.
 - **Runbooks** (ADR-0010): `docs/runbooks/<role>.md` per role, `docs/runbooks/common/` for cross-host procedures.
   Steps tagged [manual] / [script] / [check]. Runbooks are public, so placeholders only, no private values.
 - **LLM host** (ADR-0009): bare-metal laptop, llama.cpp `llama-server` from the prebuilt Vulkan release
@@ -61,7 +61,7 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
 inventory/network.yaml   source of truth
 terraform/unifi/         networks, DHCP reservations, firewall, WLANs
 terraform/proxmox/       VMs from cloud-init templates
-ansible/                 inventory.py, roles/<role>/, group_vars/<role>.yml
+ansible/                 inventory.py, roles/<role>/, group_vars/<role>_hosts.yml
 Makefile                 make llm / dns / git / all / ping
 copy.bara.sky            Copybara: filtered export to the public GitHub mirror
 .forgejo/workflows/      Forgejo Actions (Copybara sync + gitleaks)
