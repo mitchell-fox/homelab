@@ -7,7 +7,7 @@ It's also meant to be an interview talking point, so design decisions get writte
 ## Hardware
 
 - UniFi router (exact model / where the controller runs: TBD)
-- i9 box (was ESXi, wiped; old VMs rebuilt from code): i9-12900HK (14C/20T), 64 GB RAM, 2 TB NVMe, 1 TB SATA HDD
+- i9 box, Minisforum NAB9 (was ESXi, wiped; old VMs rebuilt from code): i9-12900HK (14C/20T), 64 GB RAM, 2 TB NVMe, 1 TB SATA HDD
   (Cinder volumes: Jellyfin media), 2 NICs. Ubuntu Server 24.04 LTS + OpenStack (ADR-0016).
 - Raspberry Pi 4, 8 GB (DNS)
 - Additional Raspberry Pis (count and models: TBD)
@@ -108,11 +108,34 @@ it to "Done / promoted" with a link.
 7. How many extra Pis, which models?
 8. Back up Open WebUI chat history, or accept losing it on a rebuild?
 
-## Next up (agreed 2026-10-30, not started)
+## Where we left off (2026-10-30)
+
+Done: TPM-sealed age key + backup key in the password manager (ADR-0015); `ansible/inventory.py` + `Makefile`
+(`make help/test/inventory/ping`); ADR-0016 (OpenStack via Kolla on the NAB9) and ADR-0017 (host roles);
+floating IP range in `network.yaml`.
+
+Machines installed but not yet configured or recorded:
+- **fitlet2:** Ubuntu Server 26.04, on the LAN via DHCP (no reservation yet).
+- **NAB9 (i9 box):** Ubuntu Server 24.04. Planned: NIC 1 static 192.168.10.10, NIC 2 disabled (Neutron's),
+  `ubuntu-lv` grown to the full NVMe, HDD untouched. Confirm all of that.
+- **LLM laptop:** 480 GB SATA SSD going in; install status unconfirmed.
+
+**Ask the user for, at the start of the next session:**
+- fitlet2: current IP, MAC, SSH user, `sudo smartctl -i /dev/sda`, `ls /dev/tpm*`
+- NAB9: `ip -br link` and `ip -br addr` (both NICs' names, MACs), SSH user, `lsblk`
+- LLM laptop: installed yet? MAC, SSH user (open question 4)
+- Decide: real MACs are "private" per ADR-0012, but `main` still pushes straight to public GitHub. Either keep MACs
+  as TODO until Forgejo + Copybara run, or accept MACs being public (low risk).
+
+## Next up (agreed 2026-10-30)
 
 Build with TODO placeholders where values are missing:
-1. ~~`ansible/inventory.py` + `Makefile` (ADR-0011)~~ done
-2. `llm` role: Vulkan llama.cpp, model download, systemd unit, Open WebUI, ufw, lid/sleep/battery (ADR-0009)
-3. `git` role: Forgejo, Actions runner, restic + timers, smartd (ADR-0012, ADR-0013)
-4. `copy.bara.sky` + sync workflow + gitleaks hook (ADR-0012)
-5. `docs/runbooks/git.md` (including restoring from backup); drop the draft banners once scripts exist
+1. Fill `network.yaml` + per-role `ansible_user` in `ansible/group_vars/<role>_hosts.yml`; `make ping` reaches
+   the fitlet2, the NAB9 and the laptop.
+2. `git` role on the fitlet2: Forgejo, Actions runner, restic + timers, smartd (ADR-0012, ADR-0013). Then make
+   Forgejo `origin`, add `copy.bara.sky` + sync workflow + gitleaks hook, so private values have a home.
+3. `openstack/` Kolla-Ansible config (pinned version, `globals.yml`, all-in-one inventory, sops `passwords.yml`)
+   + `make openstack` (ADR-0016). Then `terraform/openstack/`.
+4. `llm` role: Vulkan llama.cpp, model download, systemd unit, Open WebUI, ufw, lid/sleep/battery (ADR-0009)
+5. Runbooks: `docs/runbooks/git.md` (incl. restore) and `hypervisor.md` (Kolla deploy/upgrade/rebuild); drop
+   draft banners once scripts exist.
