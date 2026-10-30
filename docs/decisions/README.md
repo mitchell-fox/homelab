@@ -13,3 +13,9 @@ ADRs are not edited after they are accepted. To change a decision, write a new A
 | [0006](ADR-0006-k3s-flux-gitops.md) | k3s + Flux for workloads | Accepted |
 | [0007](ADR-0007-dns-outside-cluster.md) | DNS on the Pi, outside the cluster | Accepted |
 | [0008](ADR-0008-local-terraform-state.md) | Terraform state local, then self-hosted Postgres | Accepted |
+| [0009](ADR-0009-llm-host.md) | LAN LLM host on bare metal: llama.cpp on Vulkan, Open WebUI | Accepted |
+| [0010](ADR-0010-runbooks.md) | Runbooks per role, shared procedures in `common/` | Accepted |
+| [0011](ADR-0011-ansible-entry-point.md) | `make` over Ansible, inventory generated from `network.yaml` | Accepted |
+| [0012](ADR-0012-private-forgejo-public-mirror.md) | Private Forgejo as source of truth, public GitHub mirror via Copybara | Accepted |
+| [0013](ADR-0013-git-server-backups.md) | Git server backups with restic to microSD and a second machine | Accepted |
+| [0014](ADR-0014-secrets-two-layers.md) | Secrets in two layers (sops bootstrap, OpenBao runtime); config in git | Accepted |

@@ -14,10 +14,14 @@ This repo exists so that the next change like that is a one-line diff to
 | Network (UniFi) | Terraform | [ADR-0001](docs/decisions/ADR-0001-terraform.md) |
 | Terraform state | Local, then self-hosted Postgres | [ADR-0008](docs/decisions/ADR-0008-local-terraform-state.md) |
 | Source of truth | `inventory/network.yaml` | [ADR-0003](docs/decisions/ADR-0003-single-source-of-truth.md) |
-| Secrets | sops + age | [ADR-0004](docs/decisions/ADR-0004-sops-age-secrets.md) |
+| Secrets | sops + age for bootstrap, OpenBao at runtime (step 5) | [ADR-0004](docs/decisions/ADR-0004-sops-age-secrets.md), [ADR-0014](docs/decisions/ADR-0014-secrets-two-layers.md) |
+| Git hosting | Private Forgejo (fitlet2), public GitHub mirror via Copybara | [ADR-0012](docs/decisions/ADR-0012-private-forgejo-public-mirror.md), [ADR-0013](docs/decisions/ADR-0013-git-server-backups.md) |
+| Host config | Ansible behind `make`, inventory from `network.yaml` | [ADR-0011](docs/decisions/ADR-0011-ansible-entry-point.md) |
+| Runbooks | One per role, shared procedures in `common/` | [ADR-0010](docs/decisions/ADR-0010-runbooks.md) |
 | Hypervisor | Proxmox VE | [ADR-0005](docs/decisions/ADR-0005-proxmox-over-esxi.md) |
 | Workloads | k3s + Flux | [ADR-0006](docs/decisions/ADR-0006-k3s-flux-gitops.md) |
 | DNS | AdGuard Home / Pi-hole on a Raspberry Pi | [ADR-0007](docs/decisions/ADR-0007-dns-outside-cluster.md) |
+| Local LLM | llama.cpp (Vulkan) + Open WebUI on a bare-metal laptop | [ADR-0009](docs/decisions/ADR-0009-llm-host.md) |
 
 ## Layout
 
@@ -25,12 +29,15 @@ This repo exists so that the next change like that is a one-line diff to
 inventory/network.yaml   source of truth: subnet, DHCP, hosts, IPs, MACs
 terraform/unifi/         networks, DHCP reservations, firewall, WLANs
 terraform/proxmox/       VMs from cloud-init templates
-ansible/                 Pi DNS, k3s bootstrap
+ansible/                 inventory script, roles (llm, git, dns, ...), group_vars per role
+Makefile                 entry point: make llm, make dns, make all, ...
+copy.bara.sky            Copybara config for the public GitHub mirror
 clusters/                Flux manifests
 secrets/                 sops-encrypted only
 docs/decisions/          architecture decision records
 docs/ideas.md            backlog of future ideas (not yet decided)
 docs/runbooks/           step-by-step procedures for humans (rebuild, update, rotate, recover)
+docs/learning/           study notes behind the decisions (not decisions themselves)
 ```
 
 ## Roadmap

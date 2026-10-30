@@ -28,6 +28,12 @@ hosts:
     role: dns
     notes: Raspberry Pi 4 (8 GB), AdGuard Home or Pi-hole, kept outside the cluster
 
+  git:
+    ip: 192.168.10.3          # TODO: confirm
+    mac: TODO
+    role: git
+    notes: fitlet2, private Forgejo + Copybara mirror + restic backups (ADR-0012, ADR-0013)
+
   hypervisor:
     ip: 192.168.10.10
     mac: TODO
@@ -48,3 +54,9 @@ hosts:
     ip: 192.168.10.23
     role: k3s-server
     vm: true
+
+  llm:
+    ip: 192.168.10.30         # TODO: confirm
+    mac: TODO
+    role: llm
+    notes: laptop, Ryzen 7 2700, 64 GB RAM, Vega 56 8 GB; llama.cpp + Open WebUI (ADR-0009)
