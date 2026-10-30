@@ -45,6 +45,13 @@ secrets/                 sops-encrypted
 docs/design.md, docs/decisions/ADR-*.md
 ```
 
+## Ideas backlog
+
+`docs/ideas.md` collects future ideas. Whenever one comes up while we work (an alternative we deferred, a
+consequence worth fixing later, a tool worth trying), add it there without being asked, under the right
+heading, with what / why / when, and mention it in the reply. When an idea becomes an ADR or a roadmap step, move
+it to "Done / promoted" with a link.
+
 ## Rollout (each step usable on its own; scope is a few weekends, then move on to DataFusion)
 
 1. Repo, source of truth, secrets, local Terraform state

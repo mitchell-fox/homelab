@@ -29,6 +29,7 @@ ansible/                 Pi DNS, k3s bootstrap
 clusters/                Flux manifests
 secrets/                 sops-encrypted only
 docs/decisions/          architecture decision records
+docs/ideas.md            backlog of future ideas (not yet decided)
 docs/runbooks/           step-by-step procedures for humans (rebuild, update, rotate, recover)
 ```
 
