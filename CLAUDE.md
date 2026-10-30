@@ -36,6 +36,8 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
 - **Single source of truth**: `inventory/network.yaml` (subnet, gateway, DHCP range, hosts/IPs/MACs), read by
   Terraform (`yamldecode`) and Ansible. No hardcoded IPs anywhere else.
 - Secrets: sops + age (never plaintext in git).
+- **age key in the workstation's TPM** (ADR-0015, amends ADR-0004): `age-plugin-tpm`, no PIN, so sops decrypts with
+  no prompt; a backup age key lives only in the password manager. `.sops.yaml` uses the `age1tpm1…` recipient form.
 - **Secrets in two layers** (ADR-0014): sops holds bootstrap secrets (OpenBao unseal keys, UniFi/Proxmox creds,
   restic password); OpenBao (Vault-compatible) holds runtime app secrets from step 5, fed to k3s by External
   Secrets Operator. Config stays in git; no App Configuration equivalent.

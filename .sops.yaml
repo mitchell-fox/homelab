@@ -2,5 +2,8 @@
 # Public keys only; private keys never go in this repo.
 creation_rules:
   - path_regex: secrets/.*\.sops\.ya?ml$
+    # workstation-tpm: sealed in mitch-desktop-linux's TPM, daily use (ADR-0015)
+    # backup: plain age key, kept only in the password manager; recovery if the TPM key is lost
     age: >-
-      age196z7m9t70vw2h34qlx5wfrh0axl3akyg08qxpv8nkg548hnsps8qz7c83u
+      age1tpm1q09c07vxk2lygweggweu0vs5fmwwz7c5fmrye7cccfu9xttxk97rz9k4s4k,
+      age18fr9jr7uxkgjx6jvvgxq8s2x26neg07wxx9saeaq9rufgrk9ld3sgyrldu

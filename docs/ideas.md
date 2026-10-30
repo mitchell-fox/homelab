@@ -10,6 +10,18 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 - **Move Terraform state to the `pg` backend on self-hosted Postgres.**
   Why: survives losing the workstation, adds locking, and is Postgres practice (see ADR-0008).
   When: once Postgres runs somewhere Terraform doesn't manage, such as the Pi.
+- **Run OpenBao on the fitlet2, next to Forgejo.**
+  Why: ADR-0014 says OpenBao runs outside the cluster but names no host. The fitlet2 is always on, small, and
+  already outside the cluster. Against it: ADR-0012 says the fitlet2 runs nothing else core, and the git server and
+  the vault would share one no-name SSD. It would be the lab's vault, not its secret zero: rebuilding the fitlet2
+  needs the restic password from sops, so the root key must stay off it (ADR-0015).
+  Alternatives: a Pi, or a small VM outside k3s.
+  Server-side key: give the fitlet2 its own age recipient (its TPM if it has one, else a plain key or a YubiKey 5),
+  scoped in `.sops.yaml` to `secrets/git/` only (restic password, OpenBao unseal keys), so it can auto-unseal and
+  self-restore without being able to decrypt UniFi/Proxmox creds. A YubiKey left plugged in needs touch disabled
+  for unattended use, so it's barely better than a TPM there; it's more useful on a keychain as a portable
+  recovery recipient. Check `ls /dev/tpm*` on the fitlet2.
+  When: step 5, as an ADR that amends ADR-0012 or picks another host.
 - **Used 1-liter mini PCs (Lenovo M720q / Dell OptiPlex Micro / HP EliteDesk Mini) as extra Proxmox/k3s nodes.**
   Why: old phones were considered and rejected: they can't run Proxmox, need custom kernels for containers, are
   Wi-Fi only, and their batteries swell when left on a charger 24/7. A used 8th/9th-gen i5 mini PC (~$90–200 on eBay)
@@ -45,19 +57,18 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 - **Pre-commit hook that rejects unencrypted files in `secrets/`.**
   Why: one `git add` of a plaintext file in a public repo leaks it for good. Check for the `sops:` metadata key.
   When: soon; cheap insurance before real secrets land.
-- **Move the age key into the workstation's TPM (`age-plugin-tpm`), with an offline paper backup recipient.**
-  Why: today `keys.txt` is a plain file on an unencrypted disk, so anyone with the workstation or a copy of the disk
-  can decrypt every secret. A TPM-bound key can't be copied off the workstation. Free: the workstation has TPM 2.0, the
-  plugin is in `extra`, and sops supports age plugins (3.10+).
-  Design: `.sops.yaml` lists recipients `workstation-tpm` (daily use), `backup-paper` (a plain age key, printed, kept
-  offline; never on disk), and later `flux` (step 5, a software key as a Kubernetes Secret, since a cluster can't
-  reach the workstation's TPM). Losing the workstation, a motherboard swap, or a TPM clear (some BIOS updates reset a
-  firmware TPM) kills the TPM key, so the paper backup is required, not optional.
-  Optional upgrades: split the paper key 2-of-3 with Shamir (`age-plugin-sss`) for practice with OpenBao's unseal
-  model; add a cheap FIDO2 key (`age-plugin-fido2-hmac`, works with any key that supports `hmac-secret`) as a
-  portable recipient that survives the workstation dying.
-  When: now, before any real secrets land in `secrets/`. Write it up as an ADR that amends ADR-0004.
-  Background in [reading.md](reading.md).
+- **Harden the TPM age key: PIN, Shamir-split backup, FIDO2 recipient, or a YubiKey as the admin key.**
+  Why: ADR-0015 chose no PIN and a single password-manager backup for low friction. With no PIN, an unencrypted
+  disk, and no PCR binding, a stolen powered-off workstation can boot a live USB and use the TPM key. A PIN
+  (`--pin`, TPM anti-hammering makes a short one safe) closes that and stops someone at an unlocked session.
+  Stronger: make a YubiKey 5 (`age-plugin-yubikey`, touch policy `cached`) the admin key, so malware can't decrypt
+  without a physical touch, and keep the TPM key only if the friction is too much. Splitting the backup 2-of-3 with `age-plugin-sss` is practice for OpenBao's unseal model; a
+  cheap FIDO2 key (`age-plugin-fido2-hmac`) is a portable recipient that survives the workstation dying.
+  When: if the password manager starts to feel like too big a single point of failure, or as OpenBao prep (step 5).
+- **Switch the TPM recipient to `age1tag1…` once `age-plugin-tag` is packaged.**
+  Why: `age-plugin-tpm` now defaults to the p256tag recipient, but sops needs an `age-plugin-tag` binary for it,
+  which Arch's `age` 1.3.2 doesn't ship, so ADR-0015 uses the old `age1tpm1…` form.
+  When: if `age-plugin-tpm` drops the old-style recipient, or Arch starts shipping `age-plugin-tag`.
 - **Full-disk encryption on the workstation (LUKS, unlocked by TPM + PIN via `systemd-cryptenroll`).**
   Why: the disk is unencrypted today, so SSH keys, Terraform state, and anything else on it is readable from a
   stolen workstation. The TPM-bound age key fixes secrets only.
@@ -68,6 +79,8 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 
 ## Done / promoted
 
+- Move the age key into the workstation's TPM → [ADR-0015](decisions/ADR-0015-age-key-in-tpm.md). Simplified to
+  no PIN and a password-manager backup instead of paper; the remaining upgrades are listed above.
 - Local git server (Forgejo) with a public GitHub mirror → [ADR-0012](decisions/ADR-0012-private-forgejo-public-mirror.md),
   backups in [ADR-0013](decisions/ADR-0013-git-server-backups.md). Mirror uses Copybara instead of a plain push mirror.
 - OpenBao (Azure Key Vault equivalent) → [ADR-0014](decisions/ADR-0014-secrets-two-layers.md), built in step 5.

@@ -52,50 +52,17 @@ These are notes, not decisions; decisions go in [ADRs](../decisions/).
   (#1768, #2845, #1864, #1677, #1867 were open and unassigned on 2026-10-30).
 - It's a side project; DataFusion stays the main open-source target (Rust).
 
-## Status: moving the age key into the TPM
+## Status: age key moved into the TPM (done 2026-10-30)
 
-Plan in [ideas.md](../ideas.md) ("Move the age key into the workstation's TPM"). `secrets/` holds no encrypted
-files yet, so nothing needs re-encrypting and the old key never protected anything.
+Decision and reasoning in [ADR-0015](../decisions/ADR-0015-age-key-in-tpm.md); recovery steps in
+`secrets/README.md` and the workstation runbook. What was done:
 
-- [ ] **0. Install** (separate terminal), then log out and back in:
-  ```fish
-  paru -S age-plugin-tpm
-  sudo usermod -aG tss mfox
-  ```
-- [ ] **1. Check:** `groups` lists `tss`, and `age-plugin-tpm --help` runs.
-- [ ] **2. Put the old key aside** (deleted in step 7, once the new setup works):
-  ```fish
-  mv ~/.config/sops/age/keys.txt ~/.config/sops/age/keys.txt.old
-  ```
-- [ ] **3. Create the TPM key** where sops looks by default. Decide on `--pin` first (stops someone at an
-  unlocked session from decrypting; costs a prompt on every decrypt):
-  ```fish
-  age-plugin-tpm --generate --pin -o ~/.config/sops/age/keys.txt
-  chmod 600 ~/.config/sops/age/keys.txt
-  age-plugin-tpm -y ~/.config/sops/age/keys.txt   # prints the recipient for .sops.yaml
-  ```
-  The file is a sealed blob, useless without this machine's TPM.
-- [ ] **4. Create the paper backup key in RAM only** (`/dev/shm`), copy it to paper, then destroy the file:
-  ```fish
-  age-keygen -o /dev/shm/backup.txt   # prints the public key; note it
-  cat /dev/shm/backup.txt             # write down or print the AGE-SECRET-KEY-1... line
-  shred -u /dev/shm/backup.txt
-  ```
-  Printing passes through the print spooler on disk; hand-copying avoids that but is error-prone.
-  Step 6 catches copying mistakes. Decide where the paper lives (and whether a password-manager copy is allowed).
-- [ ] **5. Update `.sops.yaml`:** replace the old recipient with both new ones (comma-separated `age:` value),
-  with a comment saying which is the TPM key and which is the paper backup.
-- [ ] **6. Test both keys separately:**
-  ```fish
-  sops edit secrets/test.sops.yaml          # add: hello: world
-  sops decrypt secrets/test.sops.yaml       # works via the TPM key
-  mv ~/.config/sops/age/keys.txt ~/.config/sops/age/keys.txt.tpm
-  # type the paper key into /dev/shm/restore.txt
-  SOPS_AGE_KEY_FILE=/dev/shm/restore.txt sops decrypt secrets/test.sops.yaml   # works via paper only
-  shred -u /dev/shm/restore.txt
-  mv ~/.config/sops/age/keys.txt.tpm ~/.config/sops/age/keys.txt
-  rm secrets/test.sops.yaml
-  ```
-- [ ] **7. Retire the old key:** `shred -u ~/.config/sops/age/keys.txt.old`, and remove it from the password manager.
-- [ ] **8. Docs:** update `secrets/README.md` and the workstation runbook (key location, recovery from paper),
-  and write ADR-0015 (age key in the TPM, amends ADR-0004).
+- Installed `age-plugin-tpm`, added `mfox` to `tss`.
+- Generated a TPM-sealed identity with **no PIN** at `~/.config/sops/age/keys.txt`, so sops decrypts with no prompt.
+- Generated a backup age key in `/dev/shm`, saved it to the password manager, shredded the file.
+- `.sops.yaml` lists both recipients. Tested: the TPM key decrypts alone, and the backup key decrypts alone.
+- Shredded the old plain key (it never encrypted anything).
+
+Gotcha: `age-plugin-tpm -y` prints an `age1tag1…` recipient by default, and sops then fails with
+`"tag" plugin not found: exec: "age-plugin-tag"`. `-y --tpm-recipient` prints the old `age1tpm1…` form, which
+sops handles through `age-plugin-tpm` itself.
