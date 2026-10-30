@@ -1,0 +1,50 @@
+# Single source of truth for the home network.
+# Read by Terraform (yamldecode) and Ansible. No IPs are hardcoded anywhere else.
+# Changing the subnet should be a one-line diff here, plus `terraform apply` and an Ansible run.
+
+network:
+  name: lan
+  cidr: 192.168.10.0/24
+  gateway: 192.168.10.1       # TODO: confirm on the UniFi router
+  domain: home.arpa           # RFC 8375 reserved name for home networks
+  dhcp:
+    start: 192.168.10.100
+    end: 192.168.10.254
+  dns_servers:
+    - pi                      # host key below; resolved to its IP by consumers
+
+# Static assignments live below .100 so they never collide with the DHCP pool.
+# mac: TODO values get filled in during step 2 (importing the UniFi config).
+hosts:
+  router:
+    ip: 192.168.10.1
+    mac: TODO
+    role: gateway
+    notes: UniFi router; model and controller location TBD
+
+  pi:
+    ip: 192.168.10.2
+    mac: TODO
+    role: dns
+    notes: Raspberry Pi 4 (8 GB), AdGuard Home or Pi-hole, kept outside the cluster
+
+  hypervisor:
+    ip: 192.168.10.10
+    mac: TODO
+    role: hypervisor
+    notes: ESXi today, migrating to Proxmox
+
+  k3s-1:
+    ip: 192.168.10.21
+    role: k3s-server
+    vm: true
+
+  k3s-2:
+    ip: 192.168.10.22
+    role: k3s-server
+    vm: true
+
+  k3s-3:
+    ip: 192.168.10.23
+    role: k3s-server
+    vm: true

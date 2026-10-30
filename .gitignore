@@ -1,0 +1,42 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Local variable files can hold secrets; commit *.tfvars.example instead
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Secrets: only sops-encrypted files belong in git
+*.age
+age.key
+keys.txt
+*.dec.yaml
+*.dec.yml
+*.decrypted.*
+.env
+.env.*
+
+# Ansible
+*.retry
+.vault_pass*
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
