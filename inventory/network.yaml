@@ -33,7 +33,7 @@ hosts:
     ip: 192.168.10.3          # TODO: confirm
     mac: TODO
     role: git
-    notes: fitlet2, private Forgejo + Copybara mirror + restic backups (ADR-0012, ADR-0013)
+    notes: fitlet2, Ubuntu Server 26.04 LTS; private Forgejo + Copybara mirror + restic backups (ADR-0012, ADR-0013)
 
   hypervisor:
     ip: 192.168.10.10

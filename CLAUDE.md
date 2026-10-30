@@ -10,7 +10,8 @@ It's also meant to be an interview talking point, so design decisions get writte
 - ESXi box, which I'm migrating to Proxmox (current VMs and specs: TBD)
 - Raspberry Pi 4, 8 GB (DNS)
 - Additional Raspberry Pis (count and models: TBD)
-- fitlet2, no-name SATA SSD (to confirm), microSD slot for local backups: planned private git server (Forgejo)
+- fitlet2, no-name SATA SSD (to confirm), microSD slot for local backups, Ubuntu Server 26.04 LTS (same as the LLM
+  box, so roles target one distro): planned private git server (Forgejo)
 - LLM box (a laptop, run lid-closed): Ryzen 7 2700, 64 GB RAM, Radeon RX Vega 56 (8 GB), Ubuntu Server
 - Workstation (desktop, `mitch-desktop-linux`): Ryzen 9 5900XT, 64 GB RAM, GeForce RTX 5060 Ti (16 GB), CachyOS.
   Runs Terraform, Ansible and sops; TPM 2.0. Not part of the lab itself.
