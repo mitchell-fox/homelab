@@ -1,6 +1,6 @@
 # ADR-0005: Migrate the hypervisor from ESXi to Proxmox
 
-- Status: Accepted
+- Status: Superseded by [ADR-0016](ADR-0016-openstack-on-bare-metal.md)
 - Date: 2026-10-30
 
 ## Context

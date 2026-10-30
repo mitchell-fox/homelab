@@ -50,6 +50,16 @@ def validate(data: dict) -> None:
     if not (dhcp_start in subnet and dhcp_end in subnet and dhcp_start <= dhcp_end):
         errors.append(f"DHCP range {dhcp_start}-{dhcp_end} is not a valid range inside {subnet}")
 
+    floating = None
+    if "floating_ips" in net:
+        fip_start = ipaddress.ip_address(net["floating_ips"]["start"])
+        fip_end = ipaddress.ip_address(net["floating_ips"]["end"])
+        floating = (fip_start, fip_end)
+        if not (fip_start in subnet and fip_end in subnet and fip_start <= fip_end):
+            errors.append(f"floating IP range {fip_start}-{fip_end} is not a valid range inside {subnet}")
+        if fip_start <= dhcp_end and dhcp_start <= fip_end:
+            errors.append(f"floating IP range {fip_start}-{fip_end} overlaps the DHCP pool {dhcp_start}-{dhcp_end}")
+
     seen = {}
     for name, host in hosts.items():
         if "role" not in host:
@@ -63,6 +73,8 @@ def validate(data: dict) -> None:
             errors.append(f"{name}: {ip} is outside {subnet}")
         if dhcp_start <= ip <= dhcp_end:
             errors.append(f"{name}: {ip} is inside the DHCP pool {dhcp_start}-{dhcp_end}")
+        if floating and floating[0] <= ip <= floating[1]:
+            errors.append(f"{name}: {ip} is inside the floating IP range {floating[0]}-{floating[1]}")
         if ip in seen:
             errors.append(f"{name}: {ip} is already used by {seen[ip]}")
         seen[ip] = name

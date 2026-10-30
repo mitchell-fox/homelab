@@ -10,7 +10,8 @@ BASE = {
         "cidr": "192.168.10.0/24",
         "gateway": "192.168.10.1",
         "domain": "home.arpa",
-        "dhcp": {"start": "192.168.10.100", "end": "192.168.10.254"},
+        "dhcp": {"start": "192.168.10.100", "end": "192.168.10.199"},
+        "floating_ips": {"start": "192.168.10.200", "end": "192.168.10.249"},
         "dns_servers": ["pi"],
     },
     "hosts": {
@@ -60,6 +61,14 @@ class ValidateTest(unittest.TestCase):
 
     def test_ip_in_dhcp_pool(self):
         self.assertInvalid(with_host("x", ip="192.168.10.150", role="x"), "inside the DHCP pool")
+
+    def test_ip_in_floating_range(self):
+        self.assertInvalid(with_host("x", ip="192.168.10.210", role="x"), "inside the floating IP range")
+
+    def test_floating_range_overlaps_dhcp(self):
+        data = copy.deepcopy(BASE)
+        data["network"]["floating_ips"]["start"] = "192.168.10.150"
+        self.assertInvalid(data, "overlaps the DHCP pool")
 
     def test_duplicate_ip(self):
         self.assertInvalid(with_host("x", ip="192.168.10.2", role="x"), "already used by")

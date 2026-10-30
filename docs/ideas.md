@@ -10,19 +10,13 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 - **Move Terraform state to the `pg` backend on self-hosted Postgres.**
   Why: survives losing the workstation, adds locking, and is Postgres practice (see ADR-0008).
   When: once Postgres runs somewhere Terraform doesn't manage, such as the Pi.
-- **Run OpenBao on the fitlet2, next to Forgejo.**
-  Why: ADR-0014 says OpenBao runs outside the cluster but names no host. The fitlet2 is always on, small, and
-  already outside the cluster. Against it: ADR-0012 says the fitlet2 runs nothing else core, and the git server and
-  the vault would share one no-name SSD. It would be the lab's vault, not its secret zero: rebuilding the fitlet2
-  needs the restic password from sops, so the root key must stay off it (ADR-0015).
-  Alternatives: a Pi, or a small VM outside k3s.
-  Server-side key: give the fitlet2 its own age recipient (its TPM if it has one, else a plain key or a YubiKey 5),
-  scoped in `.sops.yaml` to `secrets/git/` only (restic password, OpenBao unseal keys), so it can auto-unseal and
-  self-restore without being able to decrypt UniFi/Proxmox creds. A YubiKey left plugged in needs touch disabled
-  for unattended use, so it's barely better than a TPM there; it's more useful on a keychain as a portable
-  recovery recipient. Check `ls /dev/tpm*` on the fitlet2.
-  When: step 5, as an ADR that amends ADR-0012 or picks another host.
-- **Used 1-liter mini PCs (Lenovo M720q / Dell OptiPlex Micro / HP EliteDesk Mini) as extra Proxmox/k3s nodes.**
+- **Move the i9 box to Ubuntu 26.04 once Kolla-Ansible supports it.**
+  Why: Kolla-Ansible 2026.1 supports Ubuntu 24.04 only, so the i9 box is the one host on an older Ubuntu (ADR-0016).
+  How: reinstall and redeploy from the repo, timed, which doubles as the step 6 DR test.
+  When: when a Kolla release lists Ubuntu 26.04 in its support matrix.
+- **GPU passthrough of the i9's iGPU to a Jellyfin VM (Nova PCI passthrough) for Quick Sync transcoding.**
+  Why: ADR-0017 starts Jellyfin without transcoding. When: only if a client can't play files directly.
+- **Used 1-liter mini PCs (Lenovo M720q / Dell OptiPlex Micro / HP EliteDesk Mini) as extra OpenStack compute / k3s nodes.**
   Why: old phones were considered and rejected: they can't run Proxmox, need custom kernels for containers, are
   Wi-Fi only, and their batteries swell when left on a charger 24/7. A used 8th/9th-gen i5 mini PC (~$90–200 on eBay)
   has x86, NVMe, gigabit Ethernet and 16–64 GB RAM, and idles around 10 W.
@@ -32,12 +26,15 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
   Use Guided Access to lock it to one page, and put the charger on a smart plug timer to protect the battery (the 8 Plus has no hard 80% charge limit).
   When: after Prometheus + Grafana exist.
 
-## Azure-equivalent tools (for upskilling)
-
 - **Prometheus + Grafana** (Azure Monitor managed Prometheus/Grafana): cluster and host monitoring. After step 5.
 - **Keycloak or Authentik** (Entra ID): single sign-on via OIDC for lab services. After a few services exist.
 - **Harbor** (Azure Container Registry): a local image registry, which also helps the cluster stay offline.
 - **Azurite** (Azure Storage emulator): local blob, queue and table storage for apps I write.
+
+- **Azure Local (formerly Azure Stack HCI), 60-day trial.** Why: the real on-prem Azure, managed via Arc. Not for
+  the lab: ~$10/physical core/month after the trial, needs an Azure subscription and a check-in at least every
+  30 days, and has strict hardware requirements. It teaches operating Azure, not its internals.
+  When: only as a time-boxed experiment on spare hardware, if work starts using it.
 
 ## LLM host
 
@@ -79,6 +76,9 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 
 ## Done / promoted
 
+- OpenStack as the lab's platform, on bare metal instead of nested → [ADR-0016](decisions/ADR-0016-openstack-on-bare-metal.md),
+  which also records the wider hypervisor comparison (Incus, XCP-ng, libvirt, Harvester, Azure Local).
+- OpenBao on the fitlet2 with its own scoped age key, and Jellyfin's placement → [ADR-0017](decisions/ADR-0017-host-roles.md).
 - Move the age key into the workstation's TPM → [ADR-0015](decisions/ADR-0015-age-key-in-tpm.md). Simplified to
   no PIN and a password-manager backup instead of paper; the remaining upgrades are listed above.
 - Local git server (Forgejo) with a public GitHub mirror → [ADR-0012](decisions/ADR-0012-private-forgejo-public-mirror.md),

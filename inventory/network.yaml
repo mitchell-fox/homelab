@@ -9,7 +9,10 @@ network:
   domain: home.arpa           # RFC 8375 reserved name for home networks
   dhcp:
     start: 192.168.10.100
-    end: 192.168.10.254
+    end: 192.168.10.199       # TODO step 2: shrink the router's pool to match (was .254)
+  floating_ips:               # OpenStack VMs reachable from the LAN (ADR-0016); outside the DHCP pool
+    start: 192.168.10.200
+    end: 192.168.10.249
   dns_servers:
     - pi                      # host key below; resolved to its IP by consumers
 
@@ -36,10 +39,10 @@ hosts:
     notes: fitlet2, Ubuntu Server 26.04 LTS; private Forgejo + Copybara mirror + restic backups (ADR-0012, ADR-0013)
 
   hypervisor:
-    ip: 192.168.10.10
+    ip: 192.168.10.10         # NIC 1: management
     mac: TODO
     role: hypervisor
-    notes: ESXi today, migrating to Proxmox
+    notes: i9 box, Ubuntu 24.04 + single-node OpenStack (ADR-0016); NIC 2 is Neutron's, no IP
 
   k3s-1:
     ip: 192.168.10.21
