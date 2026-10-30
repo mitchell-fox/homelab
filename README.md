@@ -1,6 +1,7 @@
 # homelab
 
-My home network, hypervisor, and cluster, defined as code.
+My home network, hypervisor, and cluster, defined as code. Fully offline and self-hosted at $0, using the
+open-source tools Azure runs on or mirrors (Flux, Prometheus, Postgres) so the skills carry over to work.
 
 My ISP swapped my equipment and forced a renumbering from `192.168.1.0/24` to `192.168.10.0/24`.
 This repo exists so that the next change like that is a one-line diff to
@@ -11,7 +12,7 @@ This repo exists so that the next change like that is a one-line diff to
 | Layer | Tool | Why |
 |-------|------|-----|
 | Network (UniFi) | Terraform | [ADR-0001](docs/decisions/ADR-0001-terraform.md) |
-| Terraform state | Azure Storage | [ADR-0002](docs/decisions/ADR-0002-azure-state-backend.md) |
+| Terraform state | Local, then self-hosted Postgres | [ADR-0008](docs/decisions/ADR-0008-local-terraform-state.md) |
 | Source of truth | `inventory/network.yaml` | [ADR-0003](docs/decisions/ADR-0003-single-source-of-truth.md) |
 | Secrets | sops + age | [ADR-0004](docs/decisions/ADR-0004-sops-age-secrets.md) |
 | Hypervisor | Proxmox VE | [ADR-0005](docs/decisions/ADR-0005-proxmox-over-esxi.md) |
@@ -28,11 +29,12 @@ ansible/                 Pi DNS, k3s bootstrap
 clusters/                Flux manifests
 secrets/                 sops-encrypted only
 docs/decisions/          architecture decision records
+docs/runbooks/           step-by-step procedures for humans (rebuild, update, rotate, recover)
 ```
 
 ## Roadmap
 
-- [ ] 1. Repo, source of truth, secrets, Azure state backend
+- [ ] 1. Repo, source of truth, secrets, local Terraform state
 - [ ] 2. UniFi in Terraform (import the existing config, don't recreate it)
 - [ ] 3. Pi DNS via Ansible, with records generated from `network.yaml`
 - [ ] 4. Proxmox migration, VMs as code

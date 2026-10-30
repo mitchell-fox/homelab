@@ -1,6 +1,6 @@
 # ADR-0002: Terraform state in Azure Storage
 
-- Status: Accepted
+- Status: Superseded by [ADR-0008](ADR-0008-local-terraform-state.md)
 - Date: 2026-10-30
 
 ## Context

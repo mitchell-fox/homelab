@@ -10,10 +10,18 @@ It's also meant to be an interview talking point, so design decisions get writte
 - ESXi box, which I'm migrating to Proxmox (current VMs and specs: TBD)
 - Raspberry Pi 4, 8 GB
 
+## Hard constraint: offline, free, local
+
+Everything runs on my own hardware and network, at $0. No cloud services, no paid tiers, no "free for 12 months".
+Azure is the inspiration, not the platform: where there's a choice, pick the self-hosted tool closest to what
+Azure uses or runs underneath (Flux = AKS GitOps, Prometheus/Grafana = Azure Monitor managed services, Postgres =
+Azure Database for PostgreSQL), so homelab work keeps building the skills I use at work.
+
 ## Decisions so far
 
 - **Terraform** (not OpenTofu): same HCL, and matches job listings. Bicep can't manage UniFi or Proxmox.
-- **Terraform state in Azure Storage** (azurerm backend). This ties the lab to my Azure work; Key Vault later.
+- **Terraform state stays local** (ADR-0008, supersedes the Azure Storage plan in ADR-0002). Local file for now,
+  then the `pg` backend on lab-hosted Postgres.
 - **Proxmox over ESXi**: free ESXi restricts the write API; Proxmox has the bpg/proxmox provider, cloud-init,
   and a built-in ESXi import wizard.
 - **k3s + Flux (GitOps)**, not Coolify. Coolify keeps config in its own DB/UI, which breaks single source of truth.
@@ -39,7 +47,7 @@ docs/design.md, docs/decisions/ADR-*.md
 
 ## Rollout (each step usable on its own; scope is a few weekends, then move on to DataFusion)
 
-1. Repo, source of truth, secrets, Azure state backend
+1. Repo, source of truth, secrets, local Terraform state
 2. UniFi in Terraform (import existing config, don't recreate)
 3. Pi DNS via Ansible, records generated from network.yaml
 4. Proxmox migration, VMs as code
