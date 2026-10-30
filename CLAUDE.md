@@ -8,7 +8,12 @@ It's also meant to be an interview talking point, so design decisions get writte
 
 - UniFi router (exact model / where the controller runs: TBD)
 - ESXi box, which I'm migrating to Proxmox (current VMs and specs: TBD)
-- Raspberry Pi 4, 8 GB
+- Raspberry Pi 4, 8 GB (DNS)
+- Additional Raspberry Pis (count and models: TBD)
+- fitlet2, no-name SATA SSD (to confirm), microSD slot for local backups: planned private git server (Forgejo)
+- LLM box (a laptop, run lid-closed): Ryzen 7 2700, 64 GB RAM, Radeon RX Vega 56 (8 GB), Ubuntu Server
+- Workstation (desktop, `mitch-desktop-linux`): Ryzen 9 5900XT, 64 GB RAM, GeForce RTX 5060 Ti (16 GB), CachyOS.
+  Runs Terraform, Ansible and sops; TPM 2.0. Not part of the lab itself.
 
 ## Hard constraint: offline, free, local
 
@@ -31,6 +36,21 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
 - **Single source of truth**: `inventory/network.yaml` (subnet, gateway, DHCP range, hosts/IPs/MACs), read by
   Terraform (`yamldecode`) and Ansible. No hardcoded IPs anywhere else.
 - Secrets: sops + age (never plaintext in git).
+- **Secrets in two layers** (ADR-0014): sops holds bootstrap secrets (OpenBao unseal keys, UniFi/Proxmox creds,
+  restic password); OpenBao (Vault-compatible) holds runtime app secrets from step 5, fed to k3s by External
+  Secrets Operator. Config stays in git; no App Configuration equivalent.
+- **Private Forgejo on the fitlet2 is the source of truth** (ADR-0012); Copybara publishes a filtered copy to a
+  public GitHub repo, with a gitleaks scan that blocks the push on any hit. A gitleaks pre-commit hook too.
+  The fitlet2 runs nothing else core (not DNS).
+- **Git server backups** (ADR-0013): nightly `forgejo dump` → restic to the fitlet2's microSD and to a second
+  machine over SFTP; smartd watches the no-name SSD. The restic password is a second must-not-lose secret.
+- **Ansible behind `make`** (ADR-0011): `ansible/inventory.py` generates the inventory from `network.yaml`,
+  grouped by `role:`; settings in `ansible/group_vars/<role>.yml`; all versions pinned.
+- **Runbooks** (ADR-0010): `docs/runbooks/<role>.md` per role, `docs/runbooks/common/` for cross-host procedures.
+  Steps tagged [manual] / [script] / [check]. Runbooks are public, so placeholders only, no private values.
+- **LLM host** (ADR-0009): bare-metal laptop, llama.cpp `llama-server` from the prebuilt Vulkan release
+  (ROCm doesn't support Vega/gfx900), Open WebUI in Docker, Qwen 3.6 35B-A3B Q4_K_M, 64k context over 2 slots,
+  q8_0 KV cache, `--n-cpu-moe` tuned. LAN-only ufw, API key. Ansible also disables lid/sleep and caps battery charge.
 - UniFi Terraform provider is community-maintained. Verify coverage against my controller version and document gaps.
 
 ## Planned layout
@@ -39,10 +59,13 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
 inventory/network.yaml   source of truth
 terraform/unifi/         networks, DHCP reservations, firewall, WLANs
 terraform/proxmox/       VMs from cloud-init templates
-ansible/                 Pi DNS, k3s bootstrap
+ansible/                 inventory.py, roles/<role>/, group_vars/<role>.yml
+Makefile                 make llm / dns / git / all / ping
+copy.bara.sky            Copybara: filtered export to the public GitHub mirror
+.forgejo/workflows/      Forgejo Actions (Copybara sync + gitleaks)
 clusters/                Flux manifests
 secrets/                 sops-encrypted
-docs/design.md, docs/decisions/ADR-*.md
+docs/design.md, docs/decisions/ADR-*.md, docs/runbooks/
 ```
 
 ## Ideas backlog
@@ -66,3 +89,17 @@ it to "Done / promoted" with a link.
 1. Which UniFi device runs the controller?
 2. What runs on the ESXi box today?
 3. ESXi box CPU / RAM / storage (to size 3 k3s VMs)
+4. LLM host: real MAC, SSH username, confirm IP 192.168.10.30
+5. fitlet2: confirm SSD; real MAC; confirm IP 192.168.10.3
+6. Which machine holds the second (off-box) restic copy of the git server?
+7. How many extra Pis, which models?
+8. Back up Open WebUI chat history, or accept losing it on a rebuild?
+
+## Next up (agreed 2026-10-30, not started)
+
+Build with TODO placeholders where values are missing:
+1. `ansible/inventory.py` + `Makefile` (ADR-0011)
+2. `llm` role: Vulkan llama.cpp, model download, systemd unit, Open WebUI, ufw, lid/sleep/battery (ADR-0009)
+3. `git` role: Forgejo, Actions runner, restic + timers, smartd (ADR-0012, ADR-0013)
+4. `copy.bara.sky` + sync workflow + gitleaks hook (ADR-0012)
+5. `docs/runbooks/git.md` (including restoring from backup); drop the draft banners once scripts exist

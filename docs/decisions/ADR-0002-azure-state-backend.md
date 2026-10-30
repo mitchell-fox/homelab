@@ -5,10 +5,10 @@
 
 ## Context
 Terraform state contains resource IDs and sometimes secrets. It needs locking, versioning, and a home
-that survives the loss of any machine in the lab, including my laptop.
+that survives the loss of any machine in the lab, including my workstation.
 
 ## Options
-- **Local state**: simplest, but it's lost along with the laptop and has no locking.
+- **Local state**: simplest, but it's lost along with the workstation and has no locking.
 - **State on a lab host (MinIO, or Postgres via the pg backend)**: circular. The lab would hold the state
   needed to rebuild the lab.
 - **Terraform Cloud / HCP**: free tier works, but it's another account and doesn't build on my existing skills.

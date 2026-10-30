@@ -9,10 +9,10 @@ ADR-0002 put Terraform state in Azure Storage. That conflicts with a hard constr
 everything runs offline, on my own hardware, at $0. Azure Storage is cheap, but it isn't free once the
 12-month trial ends, and it makes every `terraform plan` depend on the internet and an Azure subscription.
 
-State still needs to survive losing my laptop, and eventually it needs locking.
+State still needs to survive losing my workstation, and eventually it needs locking.
 
 ## Options
-- **Local state file (gitignored)**: zero setup and works fully offline. No locking, and the file is lost if the laptop is.
+- **Local state file (gitignored)**: zero setup and works fully offline. No locking, and the file is lost if the workstation is.
 - **`pg` backend on self-hosted Postgres**: built-in locking (Postgres advisory locks) on a database
   I'm learning anyway. It's the same engine as Azure Database for PostgreSQL, so the skills carry over to work.
 - **S3 backend on MinIO**: works, but it's an S3 skill, not an Azure one, and it adds another service to run.
@@ -27,7 +27,7 @@ State still needs to survive losing my laptop, and eventually it needs locking.
    which Ansible configures), switch to the `pg` backend with `terraform init -migrate-state`.
 
 ## Consequences
-- Until step 2, losing the laptop loses the state. That's recoverable: the UniFi config can be re-imported,
+- Until step 2, losing the workstation loses the state. That's recoverable: the UniFi config can be re-imported,
   which is the same work as rollout step 2.
 - The Postgres instance holding state must not be managed by the Terraform roots that use it. Otherwise
   rebuilding it would need the state it holds.
