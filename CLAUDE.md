@@ -1,15 +1,18 @@
 # Homelab as code
 
 Rebuild and codify my home network. Spectrum swapped my equipment, which forced a subnet change from
-192.168.1.0/24 to 192.168.10.0/24. The goal: the next change like that is a one-line diff.
-Design decisions get written down as ADRs.
+192.168.1.0/24 to 192.168.10.0/24, and the home network has since moved to `10.0.x.0/24` VLANs. The goal: the next
+change like that is a one-line diff. Design decisions get written down as ADRs.
+
+**The live UniFi plan is in `~/homelab/network.md`, outside this repo** (VLANs, zones, firewall rules, decisions, change
+log, with backups and baselines beside it). Check it first for anything about the network, and never commit it.
 
 ## Hardware
 
-- UniFi router (exact model / where the controller runs: TBD)
+- UniFi Cloud Gateway Ultra (UniFi OS 5.1.34), 4 LAN ports, plus one access point. A managed switch is still to buy.
 - i9 box, Minisforum NAB9 (was ESXi, wiped; old VMs rebuilt from code): i9-12900HK (14C/20T), 64 GB RAM, 2 TB NVMe, 1 TB SATA HDD
   (Cinder volumes: Jellyfin media), 2 NICs. Ubuntu Server 24.04 LTS + OpenStack (ADR-0016).
-- Raspberry Pi 4, 8 GB (DNS)
+- Raspberry Pi 4, 8 GB, Raspberry Pi OS with desktop (Debian 13): Pi-hole (ADR-0018). Also runs Netdata and Portainer.
 - Additional Raspberry Pis (count and models: TBD)
 - fitlet2, 8 GB RAM, 128 GB no-name SATA SSD (to confirm), microSD slot for local backups, Ubuntu Server 26.04 LTS
   (same as the LLM box, so roles target one distro): Forgejo + OpenBao (ADR-0017)
@@ -39,8 +42,10 @@ Azure Database for PostgreSQL).
   i9 = OpenStack workloads incl. Jellyfin (media on a Cinder volume on the HDD), laptop = LLM.
 - **k3s + Flux (GitOps)**, not Coolify. Coolify keeps config in its own DB/UI, which breaks single source of truth.
   Flux is what AKS GitOps uses. Plan for 3 small k3s VMs on OpenStack.
-- **DNS on the Pi, outside the cluster** (AdGuard Home or Pi-hole), so core network services survive cluster or
-  hypervisor downtime.
+- **DNS on the Pi, outside the cluster** (ADR-0007), so core network services survive cluster or hypervisor downtime.
+- **Pi-hole in Docker Compose** (ADR-0018): `make dns`, host networking, HaGeZi Multi PRO + Threat Intelligence Feeds,
+  Quad9 upstream. The image tracks `latest` and updates weekly with rollback, an exception to ADR-0011's pinning.
+  Blocklists refresh daily; OS packages update automatically, with reboots at 04:30 when needed.
 - **Single source of truth**: `inventory/network.yaml` (subnet, gateway, DHCP range, hosts/IPs/MACs), read by
   Terraform (`yamldecode`) and Ansible. No hardcoded IPs anywhere else.
 - Secrets: sops + age, and never committed to the public repo, even encrypted (ADR-0019).
@@ -75,7 +80,7 @@ Makefile                 make llm / dns / git / openstack / all / ping
 copy.bara.sky            Copybara: filtered export to the public GitHub mirror
 .forgejo/workflows/      Forgejo Actions (Copybara sync + gitleaks)
 clusters/                Flux manifests
-secrets/                 sops-encrypted
+secrets/                 sops-encrypted, ignored by git; workstation only until Forgejo (ADR-0019)
 docs/design.md, docs/decisions/ADR-*.md, docs/runbooks/
 ```
 
@@ -97,39 +102,59 @@ it to "Done / promoted" with a link.
 
 ## Open questions to answer before starting
 
-1. Which UniFi device runs the controller?
+1. ~~Which UniFi device runs the controller?~~ UCG Ultra (2026-11-01).
 2. ~~What runs on the ESXi box today?~~ Pi-hole and Jellyfin VMs; both rebuilt from code, not migrated (2026-10-30).
 3. ~~ESXi box CPU / RAM / storage~~ i9-12900HK, 64 GB, 2 TB NVMe + 1 TB HDD, 2 NICs (2026-10-30). Still needed:
    both NICs' interface names and MACs.
-4. LLM host: real MAC, SSH username, confirm IP 192.168.10.30
-5. fitlet2: confirm SSD; real MAC; confirm IP 192.168.10.3
+4. LLM host: real MAC, SSH username, confirm IP 10.0.1.30
+5. fitlet2: confirm SSD; real MAC; confirm IP 10.0.1.3
 6. Which machine holds the second (off-box) restic copy of the git server? (Candidate: the i9 box's HDD.)
 9. Jellyfin: where is the old media now, how big is the library, and who watches it?
 7. How many extra Pis, which models?
 8. Back up Open WebUI chat history, or accept losing it on a rebuild?
 
-## Where we left off (2026-10-30)
+## Where we left off (2026-11-01)
 
-Done: TPM-sealed age key + backup key in the password manager (ADR-0015); `ansible/inventory.py` + `Makefile`
-(`make help/test/inventory/ping`); ADR-0016 (OpenStack via Kolla on the NAB9) and ADR-0017 (host roles);
-floating IP range in `network.yaml`.
+Done:
+- **UniFi, by hand (not in Terraform yet):** VLANs and zones for Servers (10), Trusted (20), IoT (30) and Sandbox (40),
+  with the firewall matrix and custom rules set. No devices have moved off Default yet.
+- **Pi-hole:** live at `10.0.1.2`, and Default's DHCP DNS points at it. Tested with direct queries and a reboot.
+- `network.yaml` now describes the Default network (`10.0.1.0/24`) only.
+- ADR-0018 (Pi-hole), ADR-0019 (secrets out of the public repo).
+
+**Check at the start of the next session:**
+- Did a real device on Default get `10.0.1.2` as DNS, load sites and see fewer ads? The user planned to test this.
+- Did the first unattended runs work? On the Pi: `systemctl status pihole-gravity.service`,
+  `journalctl -u pihole-update.service`, `/var/log/unattended-upgrades/`.
+
+Known gaps:
+- Rollback in `pihole-update.sh` has never been exercised, and nothing alerts on failures (see `docs/ideas.md`).
+- The Gateway block rules on the empty VLANs show steady, identical hits. Source unknown and deferred; find it with a
+  packet capture on the first Sandbox test device.
+- `TEMP` firewall policies change after devices move; the steps are in `~/homelab/network.md`.
+- Older commits still show the user's email and job-search wording. Leave history alone unless they ask.
+- SSH password login stays on on the Pi, by the user's choice.
 
 Machines installed but not yet configured or recorded:
 - **fitlet2:** Ubuntu Server 26.04, on the LAN via DHCP (no reservation yet).
-- **NAB9 (i9 box):** Ubuntu Server 24.04. Planned: NIC 1 static 192.168.10.10, NIC 2 disabled (Neutron's),
+- **NAB9 (i9 box):** Ubuntu Server 24.04. Planned: NIC 1 static 10.0.1.40, NIC 2 disabled (Neutron's),
   `ubuntu-lv` grown to the full NVMe, HDD untouched. Confirm all of that.
 - **LLM laptop:** 480 GB SATA SSD going in; install status unconfirmed.
 
-**Ask the user for, at the start of the next session:**
+**Ask the user for, when those machines come up:**
 - fitlet2: current IP, MAC, SSH user, `sudo smartctl -i /dev/sda`, `ls /dev/tpm*`
 - NAB9: `ip -br link` and `ip -br addr` (both NICs' names, MACs), SSH user, `lsblk`
 - LLM laptop: installed yet? MAC, SSH user (open question 4)
 - Decide: real MACs are "private" per ADR-0012, but `main` still pushes straight to public GitHub. Either keep MACs
   as TODO until Forgejo + Copybara run, or accept MACs being public (low risk).
 
-## Next up (agreed 2026-10-30)
+## Next up
 
-Build with TODO placeholders where values are missing:
+Network first (2026-11-01):
+- Wi-Fi SSIDs (step 4 in `~/homelab/network.md`). Waiting on the user's naming choice and smart-device count.
+- Open choices: weekly updates for Netdata, removing Portainer, which managed switch to buy.
+
+Then, agreed 2026-10-30, building with TODO placeholders where values are missing:
 1. Fill `network.yaml` + per-role `ansible_user` in `ansible/group_vars/<role>_hosts.yml`; `make ping` reaches
    the fitlet2, the NAB9 and the laptop.
 2. `git` role on the fitlet2: Forgejo, Actions runner, restic + timers, smartd (ADR-0012, ADR-0013). Then make
