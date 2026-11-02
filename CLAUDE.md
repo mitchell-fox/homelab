@@ -132,7 +132,7 @@ Known gaps:
 - The Gateway block rules on the empty VLANs show steady, identical hits. Source unknown and deferred; find it with a
   packet capture on the first Sandbox test device.
 - `TEMP` firewall policies change after devices move; the steps are in `~/homelab/network.md`.
-- Older commits still show the user's email and job-search wording. Leave history alone unless they ask.
+- Older commits contain wording the user has since removed. Leave history alone unless they ask.
 - SSH password login stays on on the Pi, by the user's choice.
 
 Machines installed but not yet configured or recorded:
