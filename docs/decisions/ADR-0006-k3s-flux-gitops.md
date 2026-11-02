@@ -17,5 +17,5 @@ Self-hosted services need a deployment model where git is the source of truth, c
 A 3-node k3s cluster on Proxmox VMs, reconciled by Flux from `clusters/`.
 
 ## Consequences
-- More moving parts than Compose. The learning value and job-market relevance are worth it.
+- More moving parts than Compose. The learning value is worth it.
 - VM sizing waits on the ESXi host's specs (open question).
