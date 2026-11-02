@@ -22,5 +22,5 @@ ADRs are not edited after they are accepted. To change a decision, write a new A
 | [0015](ADR-0015-age-key-in-tpm.md) | Workstation age key in the TPM, backup key in the password manager | Accepted |
 | [0016](ADR-0016-openstack-on-bare-metal.md) | OpenStack on bare metal (Kolla-Ansible) on the i9 box; rebuild, don't migrate | Accepted |
 | [0017](ADR-0017-host-roles.md) | One job per box: Pi DNS, fitlet2 git + vault, i9 workloads | Accepted |
-| [0018](ADR-0018-pihole-in-docker.md) | Pi-hole in Docker Compose on the Pi, with HaGeZi Multi PRO and threat feeds | Accepted |
+| [0018](ADR-0018-pihole-in-docker.md) | Pi-hole in Docker Compose on the Pi, with HaGeZi Multi PRO++ and threat feeds | Accepted |
 | [0019](ADR-0019-secrets-out-of-public-repo.md) | Secrets stay out of the public repo, even encrypted | Accepted |

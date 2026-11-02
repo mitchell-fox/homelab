@@ -16,7 +16,7 @@ pihole_upstreams:
 
 # Reconciled on every run: lists not named here are removed.
 pihole_blocklists:
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.plus.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt
 
 # Daily blocklist refresh, with up to 30 minutes of random delay.
