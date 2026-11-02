@@ -1,0 +1,16 @@
+// Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename}";
+        "origin=Debian,codename=${distro_codename}-updates";
+        "origin=Debian,codename=${distro_codename}-security";
+        "origin=Raspberry Pi Foundation,codename=${distro_codename}";
+        "origin=Docker,codename=${distro_codename}";
+};
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ dns_auto_reboot_time }}";
+Dpkg::Options {
+        "--force-confdef";
+        "--force-confold";
+};

@@ -56,7 +56,7 @@ To add a role runbook, copy the structure of [llm.md](llm.md):
 | [common/renumber](common/renumber.md) | Subnet, IP, or NIC changes across the network | Draft |
 | [llm](llm.md) | Local LLM server: llama.cpp, Open WebUI, model, API access | Draft |
 | git | Private Forgejo on the fitlet2, Copybara mirror, restic backups and restore | Not written |
-| dns | Pi DNS (rollout step 3) | Not written |
+| [dns](dns.md) | Pi DNS: Pi-hole, blocklists, pointing networks at it | Current |
 | hypervisor | OpenStack on the i9 box: Kolla deploy, upgrade, rebuild (rollout step 4) | Not written |
 | k3s | Cluster and Flux (rollout step 5) | Not written |
 | common/dr-test | Wipe and rebuild on purpose, measure the time (rollout step 6) | Not written |

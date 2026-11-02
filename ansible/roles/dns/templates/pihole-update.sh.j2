@@ -1,0 +1,31 @@
+#!/bin/sh
+# Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+# Updates the Pi-hole image. If the new one doesn't answer DNS, goes back to the previous image.
+set -eu
+cd {{ pihole_dir }}
+
+healthy() {
+    docker compose up -d --wait --wait-timeout 300 "$@" &&
+        docker exec pihole dig +short +time=5 +tries=3 @127.0.0.1 example.com A | grep -Eq '^[0-9.]+$'
+}
+
+before=$(docker inspect -f '{% raw %}{{.Image}}{% endraw %}' pihole)
+docker compose pull --quiet pihole
+after=$(docker image inspect -f '{% raw %}{{.Id}}{% endraw %}' {{ pihole_image }})
+
+if [ "$before" = "$after" ]; then
+    echo "Pi-hole image is already current"
+    exit 0
+fi
+
+echo "Updating Pi-hole image: $before -> $after"
+if healthy; then
+    echo "Update succeeded"
+    docker image prune -f
+    exit 0
+fi
+
+echo "New image failed its check, rolling back to $before" >&2
+docker tag "$before" {{ pihole_image }}
+healthy --force-recreate
+exit 1

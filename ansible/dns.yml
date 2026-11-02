@@ -1,0 +1,5 @@
+# Run with `make dns` (ADR-0011).
+- name: Configure the DNS host
+  hosts: dns_hosts
+  roles:
+    - dns

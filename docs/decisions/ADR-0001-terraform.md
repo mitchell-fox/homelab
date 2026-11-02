@@ -8,9 +8,9 @@ The network (UniFi) and the hypervisor (Proxmox) need to be managed declarativel
 like Spectrum's forced subnet move is a reviewed diff instead of an afternoon of clicking.
 
 ## Options
-- **Terraform**: mature community providers for UniFi and Proxmox (bpg/proxmox). Widely asked for in job listings.
-- **OpenTofu**: same HCL and providers, open-source license. Less common in job listings.
-- **Bicep**: what I use at work, but it only targets Azure and can't manage UniFi or Proxmox.
+- **Terraform**: mature community providers for UniFi and Proxmox (bpg/proxmox). Widely used.
+- **OpenTofu**: same HCL and providers, open-source license. Less widely used.
+- **Bicep**: only targets Azure, and can't manage UniFi or Proxmox.
 - **Ansible only**: works, but it's procedural, so there's no plan/diff and no drift detection from state.
 
 ## Decision

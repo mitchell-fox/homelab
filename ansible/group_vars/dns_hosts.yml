@@ -1,0 +1,26 @@
+# Settings for hosts with role: dns (ADR-0018). Apply changes with `make dns`.
+ansible_user: mfox
+
+pihole_image: pihole/pihole:latest  # updated automatically (ADR-0018), the exception to ADR-0011's pinning
+pihole_update_schedule: "Tue *-*-* 05:00:00"
+pihole_dir: /data/services/pihole
+pihole_uid: 1000  # the pihole user inside the image
+pihole_timezone: America/New_York
+pihole_web_port: 80
+pihole_interface: eth0
+
+# Pi-hole's upstreams, and also the Pi's own resolvers, so it never depends on itself to resolve names.
+pihole_upstreams:
+  - 9.9.9.9
+  - 149.112.112.112
+
+# Reconciled on every run: lists not named here are removed.
+pihole_blocklists:
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt
+
+# Daily blocklist refresh, with up to 30 minutes of random delay.
+pihole_gravity_schedule: "*-*-* 03:30:00"
+
+# Package updates apply daily. Reboots only happen when an update needs one.
+dns_auto_reboot_time: "04:30"

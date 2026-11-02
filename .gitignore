@@ -17,7 +17,8 @@ terraform.rc
 *.tfvars.json
 !*.tfvars.example
 
-# Secrets: only sops-encrypted files belong in git
+# Secrets stay out of the public repo, even encrypted (ADR-0019)
+secrets/*.sops.yaml
 *.age
 age.key
 keys.txt

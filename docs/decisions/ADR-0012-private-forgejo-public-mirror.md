@@ -25,7 +25,7 @@ copy. Google built Copybara for this.
 
 ## Decision
 - **Forgejo on the fitlet2** is the source of truth. Forgejo Actions handles CI, using the GitHub Actions
-  syntax, which carries over to Azure Pipelines and GitHub Actions at work.
+  syntax, which carries over to GitHub Actions and is close to Azure Pipelines.
 - **The fitlet2 runs nothing else core**, and specifically not DNS, so one hardware failure can't take out both.
   It is outside the cluster and hypervisor it helps rebuild.
 - **Copybara (`copy.bara.sky`)** runs in Forgejo Actions on every push to `main`:

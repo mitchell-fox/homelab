@@ -1,0 +1,9 @@
+# Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+[Unit]
+Description=Update Pi-hole blocklists
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec pihole pihole -g

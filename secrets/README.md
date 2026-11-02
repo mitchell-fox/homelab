@@ -3,6 +3,10 @@
 Only sops-encrypted files go here (ADR-0004). Name them `*.sops.yaml` so `.sops.yaml` at the repo root
 encrypts them automatically with the age recipients it lists.
 
+**These files stay on the workstation and are not committed, even though they're encrypted** (ADR-0019).
+`.gitignore` enforces that, so git can't restore them. Keep anything you can't regenerate in the password manager
+as well. Once Forgejo is `origin`, they move there and Copybara keeps them out of the public copy.
+
 ```sh
 sops edit secrets/<name>.sops.yaml     # create or edit; decrypts to a temp file, re-encrypts on save
 sops decrypt secrets/<name>.sops.yaml  # print plaintext to stdout

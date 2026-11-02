@@ -36,6 +36,47 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
   30 days, and has strict hardware requirements. It teaches operating Azure, not its internals.
   When: only as a time-boxed experiment on spare hardware, if work starts using it.
 
+## Networking
+
+- **Sandbox VLAN: internet access only, no route to anything internal.**
+  Why: a place for untrusted devices, software and experiments that can't reach the rest of the lab.
+  Needs its own firewall zone that blocks all internal zones, the router's management, and private address ranges
+  on the upstream side (the Spectrum equipment), allowing only DHCP from the router, plus DNS if the router serves it.
+  When: with the UniFi zone setup; the working list of networks is in `~/homelab/network.md` (outside this repo), so
+  record the final list in an ADR and `network.yaml`.
+
+- **Small managed UniFi switch for per-port VLANs.**
+  Why: the UCG Ultra has only 4 LAN ports, and the Pi, fitlet2, the i9's two NICs and the LLM laptop need five wired
+  connections. One managed switch sets each port's network in software, over a single tagged uplink.
+  When: when the lab machines run out of gateway ports, likely once the fitlet2 and i9 move to the Servers VLAN.
+
+- **Slim the DNS Pi down to a server install.**
+  Why: it runs Raspberry Pi OS with the desktop, plus printing, VNC, NFS and Bluetooth services a DNS box doesn't
+  need. Fewer services means less to patch, less exposed on the network, and a closer match to ADR-0017's one job per box.
+  When: after Pi-hole is stable; removing packages or reinstalling from the Ansible role both work, and the
+  reinstall doubles as a rebuild test.
+
+- **One `network.yaml` entry per VLAN, with hosts assigned to a network.**
+  Why: the file models only the Default network, while UniFi now has VLANs 10, 20, 30 and 40, so those live only in
+  `~/homelab/network.md`. When: before managing UniFi with Terraform, or when a host moves to Servers.
+- **Generate Pi-hole local DNS records from `network.yaml`.**
+  Why: ADR-0007 wants `<host>.home.arpa` names generated from the source of truth; `make dns` doesn't do this yet.
+  When: once the planned hosts' IPs are confirmed, so no names point at the wrong place.
+- **Unbound as Pi-hole's upstream, replacing Quad9.**
+  Why: resolves names itself instead of trusting one outside provider, which fits the self-hosted goal. It gives up
+  Quad9's malware blocking (HaGeZi's Threat Intelligence Feeds partly cover that), and lookups are still unencrypted.
+  Needs DNSSEC handling for a Pi with no battery-backed clock. When: after Pi-hole has run on Quad9 for a few days.
+- **Monitoring, alerting and health checks for Pi-hole.**
+  Why: DNS is now a whole-house dependency that updates itself overnight, and a failed update, list refresh or
+  rollback is silent today. Check that it answers, blocks and is fresh, watch the timers and SD card, and send an alert.
+  When: soon; with Prometheus + Grafana, or a small check script before they exist.
+- **Second DNS server for when the Pi is down.**
+  Why: a second Pi-hole would remove the single point of failure without letting ads through, which a router
+  fallback would (clients can use either server). When: if a Pi outage actually hurts, or a spare Pi is free.
+- **Back up Pi-hole allowlists made in the web UI, or manage them in the repo.**
+  Why: `make dns` restores settings and blocklists, but not allowlist entries. Teleporter exports them.
+  When: once a few allowlist entries exist.
+
 ## LLM host
 
 - **Ubuntu autoinstall for hands-off rebuilds.**

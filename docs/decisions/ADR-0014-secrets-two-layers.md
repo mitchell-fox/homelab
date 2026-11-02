@@ -5,8 +5,8 @@
 - Builds on: [ADR-0004](ADR-0004-sops-age-secrets.md)
 
 ## Context
-At work, secrets live in Azure Key Vault and runtime config in Azure App Configuration. Using the same model
-here builds skills that carry over. But this lab must be able to rebuild itself from nothing, offline.
+A common Azure pattern keeps secrets in Azure Key Vault and runtime config in Azure App Configuration. Using the
+same model here builds skills that carry over. But this lab must be able to rebuild itself from nothing, offline.
 
 ## Options
 - **sops only**: no running service, so it decrypts offline on the worst day. But it has no access policies,

@@ -1,66 +1,77 @@
 # Single source of truth for the home network.
 # Read by Terraform (yamldecode) and Ansible. No IPs are hardcoded anywhere else.
 # Changing the subnet should be a one-line diff here, plus `terraform apply` and an Ansible run.
+#
+# This file describes the UniFi Default network (VLAN 1), where every host sits until a managed switch
+# allows per-port VLANs. See docs/ideas.md for moving to one entry per VLAN.
 
 network:
   name: lan
-  cidr: 192.168.10.0/24
-  gateway: 192.168.10.1       # TODO: confirm on the UniFi router
+  cidr: 10.0.1.0/24
+  gateway: 10.0.1.1
   domain: home.arpa           # RFC 8375 reserved name for home networks
   dhcp:
-    start: 192.168.10.100
-    end: 192.168.10.199       # TODO step 2: shrink the router's pool to match (was .254)
+    start: 10.0.1.100
+    end: 10.0.1.199           # TODO step 2: shrink the router's pool to match (now .254)
   floating_ips:               # OpenStack VMs reachable from the LAN (ADR-0016); outside the DHCP pool
-    start: 192.168.10.200
-    end: 192.168.10.249
+    start: 10.0.1.200
+    end: 10.0.1.249
   dns_servers:
     - pi                      # host key below; resolved to its IP by consumers
 
 # Static assignments live below .100 so they never collide with the DHCP pool.
+# .10-.19 are reserved for switches.
 # mac: TODO values get filled in during step 2 (importing the UniFi config).
 hosts:
   router:
-    ip: 192.168.10.1
+    ip: 10.0.1.1
     mac: TODO
     role: gateway
     ansible: false            # managed by Terraform (UniFi provider), not Ansible
-    notes: UniFi router; model and controller location TBD
+    notes: UniFi Cloud Gateway Ultra
+
+  ap:
+    ip: 10.0.1.20
+    mac: TODO
+    role: access-point
+    ansible: false            # managed by the UniFi controller
+    notes: UniFi access point
 
   pi:
-    ip: 192.168.10.2
+    ip: 10.0.1.2
     mac: TODO
     role: dns
-    notes: Raspberry Pi 4 (8 GB), AdGuard Home or Pi-hole, kept outside the cluster
+    notes: Raspberry Pi 4 (8 GB), Pi-hole in Docker (ADR-0018), kept outside the cluster
 
   git:
-    ip: 192.168.10.3          # TODO: confirm
+    ip: 10.0.1.3              # TODO: confirm
     mac: TODO
     role: git
     notes: fitlet2, Ubuntu Server 26.04 LTS; private Forgejo + Copybara mirror + restic backups (ADR-0012, ADR-0013)
 
   hypervisor:
-    ip: 192.168.10.10         # NIC 1: management
+    ip: 10.0.1.40             # NIC 1: management; TODO: confirm
     mac: TODO
     role: hypervisor
     notes: i9 box, Ubuntu 24.04 + single-node OpenStack (ADR-0016); NIC 2 is Neutron's, no IP
 
   k3s-1:
-    ip: 192.168.10.21
+    ip: 10.0.1.21
     role: k3s-server
     vm: true
 
   k3s-2:
-    ip: 192.168.10.22
+    ip: 10.0.1.22
     role: k3s-server
     vm: true
 
   k3s-3:
-    ip: 192.168.10.23
+    ip: 10.0.1.23
     role: k3s-server
     vm: true
 
   llm:
-    ip: 192.168.10.30         # TODO: confirm
+    ip: 10.0.1.30             # TODO: confirm
     mac: TODO
     role: llm
     notes: laptop, Ryzen 7 2700, 64 GB RAM, Vega 56 8 GB; llama.cpp + Open WebUI (ADR-0009)

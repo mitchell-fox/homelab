@@ -1,0 +1,11 @@
+# Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+[Unit]
+Description=Update Pi-hole blocklists daily
+
+[Timer]
+OnCalendar={{ pihole_gravity_schedule }}
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

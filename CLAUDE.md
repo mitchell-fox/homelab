@@ -2,7 +2,7 @@
 
 Rebuild and codify my home network. Spectrum swapped my equipment, which forced a subnet change from
 192.168.1.0/24 to 192.168.10.0/24. The goal: the next change like that is a one-line diff.
-It's also meant to be an interview talking point, so design decisions get written down as ADRs.
+Design decisions get written down as ADRs.
 
 ## Hardware
 
@@ -24,11 +24,11 @@ It's also meant to be an interview talking point, so design decisions get writte
 Everything runs on my own hardware and network, at $0. No cloud services, no paid tiers, no "free for 12 months".
 Azure is the inspiration, not the platform: where there's a choice, pick the self-hosted tool closest to what
 Azure uses or runs underneath (Flux = AKS GitOps, Prometheus/Grafana = Azure Monitor managed services, Postgres =
-Azure Database for PostgreSQL), so homelab work keeps building the skills I use at work.
+Azure Database for PostgreSQL).
 
 ## Decisions so far
 
-- **Terraform** (not OpenTofu): same HCL, and matches job listings. Bicep can't manage UniFi or OpenStack.
+- **Terraform** (not OpenTofu): same HCL, and the more widely used of the two. Bicep can't manage UniFi or OpenStack.
 - **Terraform state stays local** (ADR-0008, supersedes the Azure Storage plan in ADR-0002). Local file for now,
   then the `pg` backend on lab-hosted Postgres.
 - **OpenStack on bare metal on the i9 box** (ADR-0016, supersedes Proxmox in ADR-0005): Kolla-Ansible from the
@@ -43,7 +43,7 @@ Azure Database for PostgreSQL), so homelab work keeps building the skills I use 
   hypervisor downtime.
 - **Single source of truth**: `inventory/network.yaml` (subnet, gateway, DHCP range, hosts/IPs/MACs), read by
   Terraform (`yamldecode`) and Ansible. No hardcoded IPs anywhere else.
-- Secrets: sops + age (never plaintext in git).
+- Secrets: sops + age, and never committed to the public repo, even encrypted (ADR-0019).
 - **age key in the workstation's TPM** (ADR-0015, amends ADR-0004): `age-plugin-tpm`, no PIN, so sops decrypts with
   no prompt; a backup age key lives only in the password manager. `.sops.yaml` uses the `age1tpm1…` recipient form.
 - **Secrets in two layers** (ADR-0014): sops holds bootstrap secrets (OpenBao unseal keys, UniFi/OpenStack creds,

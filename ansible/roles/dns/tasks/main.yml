@@ -1,0 +1,172 @@
+# Pi-hole in Docker Compose (ADR-0018). Safe to run repeatedly.
+
+# The Pi resolves names through Quad9, not through DHCP, or it would ask itself once
+# UniFi hands out its address, and couldn't pull images or update lists if Pi-hole were down.
+- name: Find the NetworkManager connection on the LAN interface
+  ansible.builtin.command:
+    argv: [nmcli, -g, GENERAL.CONNECTION, device, show, "{{ pihole_interface }}"]
+  register: dns_connection
+  changed_when: false
+
+- name: Read the host's DNS settings
+  ansible.builtin.command:
+    argv: [nmcli, -g, "ipv4.ignore-auto-dns,ipv4.dns", connection, show, "{{ dns_connection.stdout }}"]
+  register: dns_host_settings
+  changed_when: false
+
+- name: Point the host at the upstream resolvers
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - modify
+      - "{{ dns_connection.stdout }}"
+      - ipv4.ignore-auto-dns
+      - "yes"
+      - ipv4.dns
+      - "{{ pihole_upstreams | join(',') }}"
+  become: true
+  when: dns_host_settings.stdout_lines != ['yes', pihole_upstreams | join(',')]
+  register: dns_host_changed
+  changed_when: true
+
+- name: Apply the host's DNS settings
+  ansible.builtin.command:
+    argv: [nmcli, device, reapply, "{{ pihole_interface }}"]
+  become: true
+  when: dns_host_changed is changed
+  changed_when: true
+
+- name: Create the Pi-hole directory
+  ansible.builtin.file:
+    path: "{{ pihole_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# Owned by the container's pihole user, or its databases turn read-only.
+- name: Create the Pi-hole data directory
+  ansible.builtin.file:
+    path: "{{ pihole_dir }}/etc-pihole"
+    state: directory
+    owner: "{{ pihole_uid }}"
+    group: "{{ pihole_uid }}"
+    mode: "0755"
+  become: true
+
+- name: Install the compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ pihole_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: pihole_compose
+
+- name: Decrypt the admin password on the workstation
+  ansible.builtin.command:
+    argv: [sops, decrypt, --extract, '["webpassword"]', "{{ playbook_dir }}/../secrets/pihole.sops.yaml"]
+  delegate_to: localhost
+  register: pihole_password
+  changed_when: false
+  no_log: true
+
+- name: Install the admin password
+  ansible.builtin.copy:
+    content: "{{ pihole_password.stdout }}"
+    dest: "{{ pihole_dir }}/pihole_webpasswd"
+    owner: root
+    group: root
+    mode: "0400"
+  become: true
+  register: pihole_secret
+  no_log: true
+
+- name: Start Pi-hole
+  ansible.builtin.command:
+    cmd: >-
+      docker compose up -d --wait --wait-timeout 300
+      {{ '--force-recreate' if pihole_compose is changed or pihole_secret is changed else '' }}
+    chdir: "{{ pihole_dir }}"
+  become: true
+  register: pihole_up
+  changed_when: "'Started' in pihole_up.stderr or 'Recreated' in pihole_up.stderr"
+
+# Blocklists aren't settable by env var or config file, so they go through Pi-hole's API.
+- name: Log in to the Pi-hole API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ pihole_web_port }}/api/auth"
+    method: POST
+    body_format: json
+    body:
+      password: "{{ pihole_password.stdout }}"
+  register: pihole_auth
+  retries: 30
+  delay: 5
+  until: pihole_auth.status == 200
+  no_log: true
+
+- name: Read the current blocklists
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ pihole_web_port }}/api/lists?type=block"
+    headers:
+      X-FTL-SID: "{{ pihole_auth.json.session.sid }}"
+  register: pihole_lists
+
+- name: Work out which blocklists to change
+  ansible.builtin.set_fact:
+    pihole_lists_add: "{{ pihole_blocklists | difference(pihole_lists.json.lists | map(attribute='address')) }}"
+    pihole_lists_remove: "{{ pihole_lists.json.lists | map(attribute='address') | difference(pihole_blocklists) }}"
+
+- name: Add missing blocklists
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ pihole_web_port }}/api/lists?type=block"
+    method: POST
+    headers:
+      X-FTL-SID: "{{ pihole_auth.json.session.sid }}"
+    body_format: json
+    body:
+      address: "{{ pihole_lists_add }}"
+      groups: [0]
+      enabled: true
+    status_code: [200, 201]
+  when: pihole_lists_add | length > 0
+  register: pihole_lists_added
+  changed_when: true
+
+- name: Remove blocklists not in the repo
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ pihole_web_port }}/api/lists:batchDelete"
+    method: POST
+    headers:
+      X-FTL-SID: "{{ pihole_auth.json.session.sid }}"
+    body_format: json
+    body: "{{ pihole_lists_payload | from_json }}"
+    status_code: [200, 204]
+  vars:
+    pihole_lists_payload: |-
+      [{% for url in pihole_lists_remove %}{"item": {{ url | to_json }}, "type": "block"}{{ "," if not loop.last }}{% endfor %}]
+  when: pihole_lists_remove | length > 0
+  register: pihole_lists_removed
+  changed_when: true
+
+- name: Update gravity
+  ansible.builtin.command:
+    argv: [docker, exec, pihole, pihole, -g]
+  become: true
+  when: pihole_lists_added is changed or pihole_lists_removed is changed
+  changed_when: true
+
+- name: Log out of the Pi-hole API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ pihole_web_port }}/api/auth"
+    method: DELETE
+    headers:
+      X-FTL-SID: "{{ pihole_auth.json.session.sid }}"
+    status_code: [200, 204]
+
+- name: Set up automatic updates
+  ansible.builtin.import_tasks: updates.yml

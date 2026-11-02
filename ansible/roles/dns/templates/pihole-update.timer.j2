@@ -1,0 +1,11 @@
+# Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+[Unit]
+Description=Update the Pi-hole container image weekly
+
+[Timer]
+OnCalendar={{ pihole_update_schedule }}
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+# Managed by Ansible (ansible/roles/dns). Edit the role, not this file.
+[Unit]
+Description=Update the Pi-hole container image
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ pihole_dir }}/pihole-update.sh
