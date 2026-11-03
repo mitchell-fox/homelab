@@ -15,9 +15,14 @@ pihole_upstreams:
   - 149.112.112.112
 
 # Reconciled on every run: lists not named here are removed.
+# The old ESXi Pi-hole's six lists, with PRO upgraded to PRO++ (ADR-0018).
 pihole_blocklists:
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.plus.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt
+  - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+  - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt
+  - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt
+  - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/fake.txt
+  - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/gambling.txt
+  - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/nsfw.txt
 
 # Daily blocklist refresh, with up to 30 minutes of random delay.
 pihole_gravity_schedule: "*-*-* 03:30:00"

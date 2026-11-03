@@ -76,10 +76,6 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 - **Back up Pi-hole allowlists made in the web UI, or manage them in the repo.**
   Why: `make dns` restores settings and blocklists, but not allowlist entries. Teleporter exports them.
   When: once a few allowlist entries exist.
-- **Add StevenBlack's hosts list to Pi-hole.**
-  Why: measured 2026-11-01, it adds about 21,000 hostnames beyond HaGeZi Pro++ and the Threat Intelligence Feeds, and
-  about 39% of a 400-domain sample still resolved. It also blocks some affiliate and site-testing domains they don't.
-  When: only if the query log shows ads still coming through domains it covers.
 
 ## LLM host
 
@@ -121,6 +117,8 @@ Each entry: what it is, why it's worth doing, and when it makes sense (the trigg
 
 ## Done / promoted
 
+- Add StevenBlack's hosts list to Pi-hole → part of restoring the old Pi-hole's blocklists in
+  [ADR-0018](decisions/ADR-0018-pihole-in-docker.md).
 - OpenStack as the lab's platform, on bare metal instead of nested → [ADR-0016](decisions/ADR-0016-openstack-on-bare-metal.md),
   which also records the wider hypervisor comparison (Incus, XCP-ng, libvirt, Harvester, Azure Local).
 - OpenBao on the fitlet2 with its own scoped age key, and Jellyfin's placement → [ADR-0017](decisions/ADR-0017-host-roles.md).
