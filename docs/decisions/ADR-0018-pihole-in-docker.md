@@ -24,15 +24,17 @@ be hidden by it, and there are no port mappings to maintain.
 - Upstreams are Quad9. Pi-hole's own DNSSEC stays off, because Quad9 validates and a Pi with no battery-backed
   clock can fail validation after a power cut.
 - The Pi resolves names through Quad9 directly, ignoring DHCP, so it never depends on its own Pi-hole.
-- Six blocklists, taken from the old ESXi Pi-hole's `gravity.db` (changed on 2026-11-03), with its HaGeZi Multi PRO
+- Six blocklists taken from the old ESXi Pi-hole's `gravity.db` (changed on 2026-11-03), with its HaGeZi Multi PRO
   upgraded to PRO++: StevenBlack's hosts list, plus HaGeZi Multi PRO++, Threat Intelligence Feeds, Fake, Gambling and
   NSFW. PRO++ stays because PRO let well-known Google ad domains such as `doubleclick.net`, `googleadservices.com` and
   `adservice.google.com` through. The other lists restore the old setup's coverage.
+- StevenBlack's fakenews-gambling-porn variant as well, which the old setup didn't have. Measured on 2026-11-03, about
+  46,500 of its entries aren't on the other six lists, nearly all adult sites in a small sample.
 - PRO was chosen over Normal because someone is on hand to allowlist false positives. Measured on 2026-11-01, PRO
   fully covers HaGeZi Normal and 99.6% of OISD small, so stacking those adds nothing.
 - Blocklists are reconciled through Pi-hole's API, since no config option sets them.
 - The full Threat Intelligence Feeds are included so malware blocking doesn't depend only on Quad9 and is already in
-  place if the upstream changes. The Pi 4 has the memory for the six lists' roughly 2.7 million unique domains.
+  place if the upstream changes. The Pi 4 has the memory for the seven lists' roughly 2.7 million unique domains.
 - OS packages update daily through `unattended-upgrades`, from Debian, Raspberry Pi and Docker, rebooting at
   04:30 only when an update requires it. A systemd timer refreshes blocklists daily, instead of the image's weekly job.
 - To reduce SD card wear, query history is written every 5 minutes, kept for 30 days, and `pihole.log` is off.

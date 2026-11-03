@@ -43,8 +43,8 @@ Azure Database for PostgreSQL).
 - **k3s + Flux (GitOps)**, not Coolify. Coolify keeps config in its own DB/UI, which breaks single source of truth.
   Flux is what AKS GitOps uses. Plan for 3 small k3s VMs on OpenStack.
 - **DNS on the Pi, outside the cluster** (ADR-0007), so core network services survive cluster or hypervisor downtime.
-- **Pi-hole in Docker Compose** (ADR-0018): `make dns`, host networking, six blocklists (StevenBlack; HaGeZi PRO++, Threat
-  Intelligence Feeds, Fake, Gambling, NSFW), Quad9 upstream. The image tracks `latest` and updates weekly with rollback, an exception to ADR-0011's pinning.
+- **Pi-hole in Docker Compose** (ADR-0018): `make dns`, host networking, seven blocklists (StevenBlack and its fakenews-gambling-porn
+  variant; HaGeZi PRO++, Threat Intelligence Feeds, Fake, Gambling, NSFW), Quad9 upstream. The image tracks `latest` and updates weekly with rollback, an exception to ADR-0011's pinning.
   Blocklists refresh daily; OS packages update automatically, with reboots at 04:30 when needed.
 - **Single source of truth**: `inventory/network.yaml` (subnet, gateway, DHCP range, hosts/IPs/MACs), read by
   Terraform (`yamldecode`) and Ansible. No hardcoded IPs anywhere else.
